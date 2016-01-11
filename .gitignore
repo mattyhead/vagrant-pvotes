@@ -1,0 +1,7 @@
+access.log
+error.log
+logs  
+public_html
+tmp
+.*
+.vagrant
