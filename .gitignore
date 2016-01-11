@@ -5,3 +5,4 @@ public_html
 tmp
 .*
 .vagrant
+dbsetup.sh

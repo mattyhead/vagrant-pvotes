@@ -1,16 +1,4 @@
 #!/usr/bin/env bash
-DBNAME=''
-DBUSER=''
-DBPASS=''
-
-# setup hosts file
-DBSETUP=$(cat <<EOF
-CREATE USER '${DBUSER}'@'localhost' IDENTIFIED BY '${DBPASS}';
-GRANT USAGE ON * . * TO '${DBUSER}'@'localhost' IDENTIFIED BY '${DBPASS}' WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0 ;
-CREATE DATABASE IF NOT EXISTS ${DBNAME};
-GRANT ALL PRIVILEGES ON ${DBNAME}.* TO '${DBUSER}'@'localhost';
-EOF
-)
 
 # Use single quotes instead of double quotes to make it work with special-character passwords
 PASSWORD='12345678'
@@ -45,8 +33,6 @@ sudo debconf-set-selections <<< "phpmyadmin phpmyadmin/mysql/admin-pass password
 sudo debconf-set-selections <<< "phpmyadmin phpmyadmin/mysql/app-pass password $PASSWORD"
 sudo debconf-set-selections <<< "phpmyadmin phpmyadmin/reconfigure-webserver multiselect apache2"
 sudo apt-get -y install phpmyadmin
-
-echo "${DBSETUP}" | mysql -uroot -p${PASSWORD}
 
 # setup hosts file
 VHOST=$(cat <<EOF
@@ -86,3 +72,5 @@ sudo apt-get -y install git
 # install Composer
 curl -s https://getcomposer.org/installer | php
 mv composer.phar /usr/local/bin/composer
+
+echo "If successful, run your DB setup script (.gitignore excludes dbsetup.sh) followed by populate.sh"
