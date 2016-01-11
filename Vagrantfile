@@ -17,7 +17,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.synced_folder "./", "/var/www/"
 
   # Set memory to 2GB
-  config.vm.customize ["modifyvm", :id, "--memory", 2048]
+  config.vm.customize ["modifyvm", :id, "--memory", 3072]
 
   # Set processors to 2 and usage to 75%
   config.vm.customize ["modifyvm", :id, "--cpus", 2]
