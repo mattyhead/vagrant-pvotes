@@ -86,6 +86,3 @@ sudo apt-get -y install git
 # install Composer
 curl -s https://getcomposer.org/installer | php
 mv composer.phar /usr/local/bin/composer
-
-curl -s http://www.philadelphiavotes.com/pvotes.all.sql.gz
-gunzip < pvotes.all.sql.gz | sed 's/www\.philadelphiavotes\.com/192.168.33.22/g' | sed  's/philadelphiavotes\.com/192.168.33.22/g' | sed 's/\/home\/citycom2/\/var\/www/g' | mysql -u${DBUSER} -p${DBPASS} ${DBNAME}
