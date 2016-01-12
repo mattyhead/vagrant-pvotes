@@ -1,9 +1,10 @@
 #!/bin/bash
 
 source /var/www/config
-
-ssh citycom2@philadelphiavotes.com "bin/dump-exclude-one.sh jos_rt_cold_data;tar czf -  " | tar xzf - 
-
+echo "dumping and pulling db"
+date
+ssh citycom2@philadelphiavotes.com "bin/dump-exclude-one.sh jos_rt_cold_data;tar czf - pvotes.no-jos_rt_cold_data.sql.gz" | tar xzf - 
+date "done \ncreating local DB and user"
 # setup hosts file
 DBSETUP=$(cat <<EOF
 CREATE USER '${DBUSER}'@'localhost' IDENTIFIED BY '${DBPASS}';
@@ -12,7 +13,9 @@ CREATE DATABASE IF NOT EXISTS ${DBNAME};
 GRANT ALL PRIVILEGES ON ${DBNAME}.* TO '${DBUSER}'@'localhost';
 EOF
 )
-
 echo "${DBSETUP}" | mysql -uroot -p${PASSWORD}
-
+echo "importing DB"
+date
 gunzip < pvotes.no-jos_rt_cold_data.sql.gz | sed 's/www\.philadelphiavotes\.com/192.168.33.22/g' | sed  's/philadelphiavotes\.com/192.168.33.22/g' | sed 's/\/home\/citycom2/\/var\/www/g' | mysql -u${DBUSER} -p${DBPASS} ${DBNAME}
+date
+echo "done"
