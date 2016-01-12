@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# These are the *real* dB values
+DBNAME=''
+DBUSER=''
+DBPASS=''
+
+# These are arbitrary VM values
+PASSWORD='12345678'
+PROJECTFOLDER='public_html'
