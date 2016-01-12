@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-# Use single quotes instead of double quotes to make it work with special-character passwords
-PASSWORD='12345678'
-PROJECTFOLDER='public_html'
+source /var/www/config
 
 # create project folder
 sudo mkdir "/var/www/${PROJECTFOLDER}/"
@@ -73,4 +71,5 @@ sudo apt-get -y install git
 curl -s https://getcomposer.org/installer | php
 mv composer.phar /usr/local/bin/composer
 
-echo "If successful, run your DB setup script (.gitignore excludes dbsetup.sh) followed by populate.sh"
+# eventually, we'll want to shard the above, test for success and run the following automatically
+echo "If successful, run populate.sh"
