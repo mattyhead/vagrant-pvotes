@@ -5,7 +5,7 @@ echo "dumping and pulling db"
 date
 ssh citycom2@philadelphiavotes.com "bin/dump-exclude-one.sh jos_rt_cold_data;tar czf - pvotes.no-jos_rt_cold_data.sql.gz" | tar xzf - 
 date "done \ncreating local DB and user"
-# setup hosts file
+# setup site db user
 DBSETUP=$(cat <<EOF
 CREATE USER '${DBUSER}'@'localhost' IDENTIFIED BY '${DBPASS}';
 GRANT USAGE ON * . * TO '${DBUSER}'@'localhost' IDENTIFIED BY '${DBPASS}' WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0 ;
