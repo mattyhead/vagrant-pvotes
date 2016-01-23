@@ -41,7 +41,7 @@ VHOST=$(cat <<EOF
                 Options FollowSymLinks
                 AllowOverride all
         </Directory>
-        <Directory /var/www/${PROJECTFOLDER}/>
+        <Directory /var/www/${PROJECTFOLDER} />
                 Options Indexes FollowSymLinks MultiViews
                 AllowOverride All
                 Order allow,deny
