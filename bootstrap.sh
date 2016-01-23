@@ -10,6 +10,7 @@ sudo mkdir "/var/www/tmp"
 # update / upgrade
 sudo apt-get update
 sudo apt-get -y dist-upgrade
+sudo apt-get autoremove --purge
 sudo apt-get install -y curl git virtualbox-guest-utils
 
 # install apache2 and php5
@@ -37,11 +38,11 @@ VHOST=$(cat <<EOF
 <VirtualHost *:80>
         ServerAdmin webmaster@localhost
         DocumentRoot /var/www/${PROJECTFOLDER}
-        <Directory />
+        <Directory>
                 Options FollowSymLinks
                 AllowOverride all
         </Directory>
-        <Directory /var/www/${PROJECTFOLDER} />
+        <Directory /var/www/${PROJECTFOLDER}>
                 Options Indexes FollowSymLinks MultiViews
                 AllowOverride All
                 Order allow,deny
