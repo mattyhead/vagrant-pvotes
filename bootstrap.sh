@@ -37,7 +37,7 @@ VHOST=$(cat <<EOF
 <VirtualHost *:80>
         ServerAdmin webmaster@localhost
         DocumentRoot /var/www/${PROJECTFOLDER}
-        <Directory>
+        <Directory / >
                 Options FollowSymLinks
                 AllowOverride all
         </Directory>
