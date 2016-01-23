@@ -10,8 +10,7 @@ sudo mkdir "/var/www/tmp"
 # update / upgrade
 sudo apt-get update
 sudo apt-get -y dist-upgrade
-sudo apt-get autoremove --purge
-sudo apt-get install -y curl git virtualbox-guest-utils
+sudo apt-get install -y curl virtualbox-guest-utils
 
 # install apache2 and php5
 sudo apt-get install -y apache2 php5 php5-curl
