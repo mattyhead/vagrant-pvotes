@@ -20,3 +20,6 @@ date
 gunzip < pvotes.no-jos_rt_cold_data.sql.gz | sed 's/www\.philadelphiavotes\.com/192.168.33.22/g' | sed  's/philadelphiavotes\.com/192.168.33.22/g' | sed 's/\/home\/citycom2/\/var\/www/g' | mysql -u${DBUSER} -p${DBPASS} ${DBNAME}
 date
 echo "done"
+
+echo "getting site (excluding public_html/files/*)"
+tar citycom2@philadelphiavotes.com "tar --exclude='public_html/files/*' czf - public_html" | "tar - xzf"
