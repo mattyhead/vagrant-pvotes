@@ -22,4 +22,4 @@ date
 echo "done"
 
 echo "getting site (excluding public_html/files/*)"
-tar citycom2@philadelphiavotes.com "tar --exclude='public_html/files/*' czf - public_html" | "tar - xzf"
+ssh citycom2@philadelphiavotes.com "tar --exclude='public_html/files/*' czf - public_html" | "tar - xzf"
