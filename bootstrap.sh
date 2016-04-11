@@ -1,28 +1,32 @@
 #!/bin/bash
 
-source /var/www/config
-
-sudo rm -Rf "/var/www/${PROJECTFOLDER}/" "/var/www/logs" "/var/www/tmp"
-
-# create project folder
-sudo mkdir "/var/www/${PROJECTFOLDER}/"
-sudo mkdir "/var/www/logs"
-sudo mkdir "/var/www/tmp"
-sudo echo "<php phpinfo();" > /var/www/${PROJECTFOLDER}/index.php
-
 # update / upgrade
 sudo apt-get update
 sudo apt-get -y upgrade
-sudo apt-get install -y curl virtualbox-guest-utils
+echo "Let's make sure we have a few utilities"
+sudo apt-get install -y curl virtualbox-guest-utils git
 
 # install apache2 and php5
-sudo apt-get install -y nginx php5 php5-fpm php5-curl php5-mcrypt php5-gmp php5-fpm php5-cli git
-sudo sed -i "s/^;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g" /etc/php5/fpm/php.ini
+echo "Installing nginx and PHP"
+sudo apt-get install -y nginx php5 php5-fpm php5-curl php5-mcrypt php5-gmp php5-fpm php5-cli
+# sudo sed -i "s/^;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g" /etc/php5/fpm/php.ini
 
 # install mysql and give password to installer
+echo "Install MySQL"
 sudo debconf-set-selections <<< "mysql-server mysql-server/root_password password $PASSWORD"
 sudo debconf-set-selections <<< "mysql-server mysql-server/root_password_again password $PASSWORD"
 sudo apt-get -y install mysql-server php5-mysql
+
+echo "Create DB user and database"
+# setup site db user
+DBSETUP=$(cat <<EOF
+CREATE USER '${USERNAME}'@'localhost' IDENTIFIED BY '${PASSWORD}';
+GRANT USAGE ON * . * TO '${USERNAME}'@'localhost' IDENTIFIED BY '${DBPASS}' WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0 ;
+CREATE DATABASE IF NOT EXISTS ${USERNAME};
+GRANT ALL PRIVILEGES ON ${USERNAME}.* TO '${PASSWORD}'@'localhost';
+EOF
+)
+echo "${DBSETUP}" | mysql -uroot -p${PASSWORD}  
 
 # install phpmyadmin and give password(s) to installer
 # for simplicity I'm using the same password for mysql and phpmyadmin
@@ -33,74 +37,49 @@ sudo debconf-set-selections <<< "phpmyadmin phpmyadmin/mysql/app-pass password $
 sudo debconf-set-selections <<< "phpmyadmin phpmyadmin/reconfigure-webserver multiselect apache2"
 sudo apt-get -y --no-install-recommends install phpmyadmin
 
-# setup hosts file
-VHOST=$(cat <<EOF
-server {
-  listen 80;
+# lets eat the default vhosts and pools
+sudo rm -Rf /etc/nginx/sites-available/* /etc/nginx/sites-enabled/* /etc/php5/fpm/pool.d/*
 
-  root /var/www/${PROJECTFOLDER};
+HOME_DIR=$USERNAME
+#echo "create database $USERNAME;grant ALL on $USERNAME.* to $USERNAME@localhost;set password for $USERNAME@localhost=password('$PASSWORD');" | mysql -u root -p
 
-  access_log /var/www/logs/error.log;
-  error_log /var/www/logs//error.log;
-  index index.php index.html index.htm default.html default.htm;
+# Now we need to copy the virtual host template
+CONFIG=$NGINX_CONFIG/$DOMAIN.http.conf
+cp $SHARE_DIR/nginx.vhost.conf.template $CONFIG
+$SED -i "s/@@HOSTNAME@@/$DOMAIN/g" $CONFIG
+$SED -i "s#@@PATH@@#\/home\/"$USERNAME$PUBLIC_HTML_DIR"#g" $CONFIG
+$SED -i "s/@@LOG_PATH@@/\/home\/$USERNAME\/_logs/g" $CONFIG
+$SED -i "s#@@SOCKET@@#/var/run/"$USERNAME"_fpm.sock#g" $CONFIG
 
-  location / {
-    try_files $uri $uri/ /index.php?$args;
-  }
+cp $SHARE_DIR/pool.conf.template $FPMCONF
+$SED -i "s/@@USER@@/$USERNAME/g" $FPMCONF
+$SED -i "s/@@HOME_DIR@@/\/home\/$USERNAME/g" $FPMCONF
+$SED -i "s/@@START_SERVERS@@/$FPM_SERVERS/g" $FPMCONF
+$SED -i "s/@@MIN_SERVERS@@/$MIN_SERVERS/g" $FPMCONF
+$SED -i "s/@@MAX_SERVERS@@/$MAX_SERVERS/g" $FPMCONF
+MAX_CHILDS=$((MAX_SERVERS+START_SERVERS))
+$SED -i "s/@@MAX_CHILDS@@/$MAX_CHILDS/g" $FPMCONF
 
-  location ~* /(images|cache|media|logs|tmp)/.*\.(php|pl|py|jsp|asp|sh|cgi)$ {
-    return 403;
-    error_page 403 /403_error.html;
-  }
+usermod -aG $USERNAME $WEB_SERVER_GROUP
+chmod g+rx /home/$HOME_DIR
+chmod 600 $CONFIG
 
-  location ~ "^(.+\.php)($|/)" {
-    fastcgi_split_path_info ^(.+\.php)(.*)$;
-    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-    fastcgi_param SCRIPT_NAME $fastcgi_script_name;
-    fastcgi_param PATH_INFO $fastcgi_path_info;
-    fastcgi_param SERVER_NAME $host;
-    if ($uri !~ "^/uploads/") {
-      fastcgi_pass   unix:@@SOCKET@@;
-    }
-    include        fastcgi_params;
-  }
+ln -s $CONFIG $NGINX_SITES_ENABLED/$DOMAIN.conf
 
-  location ~* \.(ico|pdf|flv)$ {
-    expires 1y;
-  }
+# set file perms and create required dirs!
+mkdir -p /home/$HOME_DIR$PUBLIC_HTML_DIR
+mkdir /home/$HOME_DIR/_logs
+mkdir /home/$HOME_DIR/_sessions
+chmod 750 /home/$HOME_DIR -R
+chmod 700 /home/$HOME_DIR/_sessions
+chmod 770 /home/$HOME_DIR/_logs
+chmod 750 /home/$HOME_DIR$PUBLIC_HTML_DIR
+chown $USERNAME:$USERNAME /home/$HOME_DIR/ -R
 
-  location ~* /(images|cache|media|logs|tmp)/.*\.(php|pl|py|jsp|asp|sh|cgi)$ {
-    return 403;
-    error_page 403 /403_error.html;
-  }
+$NGINX_INIT reload
+$PHP_FPM_INIT restart
 
-  location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
-    expires max;
-    log_not_found off;
-    access_log off;
-  }
-
-  location ~* \.(html|htm)$ {
-    expires 30m;
-  }
-
-  location ~* /\.(ht|git|svn) {
-    deny  all;
-  }
-}
-EOF
-)
-echo "${VHOST}" > /etc/nginx/sites-available/000-default.conf
-# lets eat the default vhosts
-sudo rm -Rf /etc/nginx/sites-enabled/*
-# and link the new one
-ln -s /etc/nginx/sites-available/000-default.conf /etc/nginx/sites-enabled/000-default
-
-ln -s /usr/share/phpmyadmin /var/www/$PROJECTFOLDER/pma
-
-# restart apache
-sudo service nginx restart
-sudo service php5-fpm restart
+ln -s /usr/share/phpmyadmin /home/$HOME_DIR/$PROJECTFOLDER/pma
 
 # set USE_LE in config
 apt-cache show letsencrypt

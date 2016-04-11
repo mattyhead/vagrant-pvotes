@@ -1,10 +1,27 @@
 #!/usr/bin/env bash
 
 # These are the *real* dB values
-DBNAME=''
-DBUSER=''
-DBPASS=''
+# DBNAME=''
+# DBUSER=''
+# DBPASS=''
 
 # These are arbitrary VM values
 PASSWORD='12345678'
 PROJECTFOLDER='public_html'
+USE_LE=0
+
+NGINX_CONFIG='/etc/nginx/sites-available'
+NGINX_SITES_ENABLED='/etc/nginx/sites-enabled'
+PHP_INI_DIR='/etc/php5/fpm/pool.d'
+WEB_SERVER_GROUP='www-data'
+NGINX_INIT='/etc/init.d/nginx'
+PHP_FPM_INIT='/etc/init.d/php5-fpm'
+
+SED=`which sed`
+CURRENT_DIR=`dirname $0`
+DOMAIN='example.com'
+
+USERNAME='vagrant'
+FPM_SERVERS=2
+MIN_SERVERS=2
+MAX_SERVERS=5
